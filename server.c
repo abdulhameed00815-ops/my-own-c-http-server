@@ -9,11 +9,35 @@
 #define MYPORT "3940"
 #define BACKLOG 10
 
+void sigchld_handler(int s)
+{
+	(void)s;
+
+	int saved_errno = errno;
+
+	while(waitpid(-1, NULL, WNOHANG) > 0);
+
+	errno = saved_errno;
+}
+
+void *get_in_addr(struct sockaddr *sa)
+{
+	if (sa->sa_family == AF_INET) {
+		return &(((struct sockaddr_in*)sa)->sin_addr);
+	}
+
+	return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
 int main(void)
 {
 	struct sockaddr_storage their_addr;
 	socklen_t addr_size;
 	struct addrinfo hints, *res, *p;
+	struct sigaction sa;
+	int yes=1;
+	char s[INET6_ADDRSTRLEN];
+	int rv
 	int sockfd, newfd;
 
 	memset(&hints, 0, sizeof hints);
@@ -21,23 +45,51 @@ int main(void)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	getaddrinfo(NULL, MYPORT, &hints, &res);
-		
-	setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes);
-	sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-
-	bind(sockfd, res->ai_addr, res->ai_addrlen)
-
-	while(true){
-		listen(sockfd, BACKLOG);
-		addr_size = sizeof their_addr;
-		newfd = accept(sockfd, (struct sockaddr *)&theiraddr, &addr_size);
-		recv(sockfd, void *buf, 100, 0);
+	if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) {
+		fprintf(stderr, "getaddrinfo: %\n", gai_sterror(rv));
+		return 1;
 	}
 
-	}
+	for(p = servinfo; p != NULL; p = p->ai_next) {
+		if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+			perror("server: socket");
+			continue;
+		}
 
+		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+			perror("setsockopt");
+			exit(1);
+		}
+
+		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+			close(sockfd);
+			perror("server: bind");
+			continue;
+		}
+
+		break;
+	}
+	
 	freeaddrinfo(res);
+
+	if (p == NULL) {
+		fprintf(stderr, "server: failed to bind\n");
+		exit(1);
+	}
+
+	if (listen(sockfd, BACKLOG) == -1) {
+		perror("listen");
+		exit(1);
+	}
+
+	sa.sa_handler = sigchld_handler;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+
+	if (sigaction(SIGCHLD, &sa, NULL) == -1){
+		perror("sigaction");
+		exit(1);
+	}
 
 	return 0;
 }
