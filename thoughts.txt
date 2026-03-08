@@ -1,0 +1,1 @@
+okay, so i 've been copying code from the beej's network programming tutorial, i 've been really struggling to understand things lately and i 'm looking forward to writing more comments and starting writing my own code from my mind.
