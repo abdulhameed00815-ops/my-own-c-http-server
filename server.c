@@ -1,14 +1,19 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/socket.h>
+#include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <netinet/in.h>
+#include <sys/wait.h>
+#include <signal.h>
 
 #define MYPORT "3940"
 #define BACKLOG 10
 
+//clean dead children processes.
 void sigchld_handler(int s)
 {
 	(void)s;
@@ -32,12 +37,12 @@ void *get_in_addr(struct sockaddr *sa)
 int main(void)
 {
 	struct sockaddr_storage their_addr;
-	socklen_t addr_size;
-	struct addrinfo hints, *res, *p;
+	socklen_t sin_size;
+	struct addrinfo hints, *servinfo, *p;
 	struct sigaction sa;
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];
-	int rv
+	int rv;
 	int sockfd, newfd;
 
 	memset(&hints, 0, sizeof hints);
@@ -45,8 +50,8 @@ int main(void)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) {
-		fprintf(stderr, "getaddrinfo: %\n", gai_sterror(rv));
+	if ((rv = getaddrinfo(NULL, MYPORT, &hints, &servinfo))) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
 
@@ -70,7 +75,7 @@ int main(void)
 		break;
 	}
 	
-	freeaddrinfo(res);
+	freeaddrinfo(servinfo);
 
 	if (p == NULL) {
 		fprintf(stderr, "server: failed to bind\n");
@@ -89,6 +94,31 @@ int main(void)
 	if (sigaction(SIGCHLD, &sa, NULL) == -1){
 		perror("sigaction");
 		exit(1);
+	}
+
+	printf("server: waiting for connections...\n");
+
+	while(1) {
+		sin_size = sizeof their_addr;
+		newfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+
+		if (newfd == -1) {
+			perror("accept");
+			continue;
+		}
+
+		inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
+		printf("server: got connection from %s\n", s);
+
+		if (!fork()) {
+			close(sockfd);
+			if (send(newfd, "hello, world!", 13, 0) == -1) {
+				perror("send");
+			}
+			close(newfd);
+			exit(0);
+		}
+		close(newfd);
 	}
 
 	return 0;
