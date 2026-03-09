@@ -1,1 +1,1 @@
-okay, so i 've been copying code from the beej's network programming tutorial, i 've been really struggling to understand things lately and i 'm looking forward to writing more comments and starting writing my own code from my mind.
+alright, so the beej's tutorial should be a good base for our server, we want to grasp the code well before advancing more into the server's structure, tomorrow i ll get the basic server/client setup and working, i ll also add comments everywhere, maybe even research adding more functionality.
