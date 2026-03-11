@@ -1,1 +1,1 @@
-alright, so the beej's tutorial should be a good base for our server, we want to grasp the code well before advancing more into the server's structure, tomorrow i ll get the basic server/client setup and working, i ll also add comments everywhere, maybe even research adding more functionality.
+a test commit to github
