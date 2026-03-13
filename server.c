@@ -50,17 +50,20 @@ int main(void)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
+	//the getaddrinfo function makes the os give us some ready to use socket address configurations for our server based on our hints.
 	if ((rv = getaddrinfo(NULL, MYPORT, &hints, &servinfo))) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
 
+	//here we loop thro the results of getaddrinfo, pick a working address, and create a socket using it.
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 		if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
 			perror("server: socket");
 			continue;
 		}
 
+		//this allows us to bind to the same port after closing the server without issues.
 		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
 			perror("setsockopt");
 			exit(1);
