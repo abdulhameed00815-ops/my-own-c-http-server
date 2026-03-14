@@ -42,8 +42,9 @@ int main(void)
 	struct sigaction sa;
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];
-	int rv;
+	int rv, byte_count;
 	int sockfd, newfd;
+	char buf[512];
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
@@ -115,7 +116,11 @@ int main(void)
 
 		if (!fork()) {
 			close(sockfd);
-			if (send(newfd, "hello, world!", 13, 0) == -1) {
+			if ((byte_count = recv(sockfd, buf, sizeof buf, 0)) == -1) {
+				perror("recv");
+			}
+			//modified the function to send the buffered recieved data instead of just a string.
+			if (send(newfd, buf, sizeof buf, 0) == -1) {
 				perror("send");
 			}
 			close(newfd);
