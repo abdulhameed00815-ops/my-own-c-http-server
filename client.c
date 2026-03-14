@@ -72,6 +72,9 @@ int main(int argc, char *argv[])
 	printf("client: connected to %s\n", s);
 	freeaddrinfo(servinfo);
 
+	if (send(sockfd "all white gucci suie i 'm feeling righteous", 44, 0) == -1) {
+		perror("send");
+	}
 	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
 		perror("recv");
 		exit(1);
