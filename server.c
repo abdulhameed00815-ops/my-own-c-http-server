@@ -12,6 +12,7 @@
 
 #define MYPORT "3940"
 #define BACKLOG 10
+#define MAXDATASIZE 100
 
 //clean dead children processes.
 void sigchld_handler(int s)
@@ -44,7 +45,7 @@ int main(void)
 	char s[INET6_ADDRSTRLEN];
 	int rv, byte_count;
 	int sockfd, newfd;
-	char buf[512];
+	char buf[MAXDATASIZE];
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
@@ -116,9 +117,10 @@ int main(void)
 
 		if (!fork()) {
 			close(sockfd);
-			if ((byte_count = recv(sockfd, buf, sizeof buf, 0)) == -1) {
+			if ((byte_count = recv(newfd, buf, MAXDATASIZE-1, 0)) == -1) {
 				perror("recv");
 			}
+			printf("recieved: %s\n", buf);
 			//modified the function to send the buffered recieved data instead of just a string.
 			if (send(newfd, buf, sizeof buf, 0) == -1) {
 				perror("send");
