@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
 	char buf[MAXDATASIZE];
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
+	int len;
 	char s[INET6_ADDRSTRLEN];
 	
 	if (argc != 2) {
@@ -72,15 +73,13 @@ int main(int argc, char *argv[])
 	printf("client: connected to %s\n", s);
 	freeaddrinfo(servinfo);
 
-	if (send(sockfd "all white gucci suie i 'm feeling righteous", 44, 0) == -1) {
+	if (send(sockfd, "hello, world!", 13, 0) == -1) {
 		perror("send");
 	}
 	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
 		perror("recv");
 		exit(1);
 	}
-
-	buf[numbytes] = '\0';
 
 	printf("client: recieved '%s'\n", buf);
 	close(sockfd);
