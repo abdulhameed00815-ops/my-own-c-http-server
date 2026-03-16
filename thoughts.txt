@@ -1,1 +1,1 @@
-a test commit to github
+so, the next step is to to adapt the server to properly read http requests line by line.
