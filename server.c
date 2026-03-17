@@ -46,6 +46,9 @@ int main(void)
 	int rv, byte_count;
 	int sockfd, newfd;
 	char buf[MAXDATASIZE];
+	char lines[5][10];
+	const char s1[2] = "\n";
+	char *token;
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
@@ -120,7 +123,18 @@ int main(void)
 			if ((byte_count = recv(newfd, buf, MAXDATASIZE-1, 0)) == -1) {
 				perror("recv");
 			}
-			printf("recieved: %s\n", buf);
+			token = strtok(buf, s1);	
+			while ( token != NULL ) {
+				for (int i = 0; i < 6; i++)e
+					strcpk(lines[i][10], *token);
+				}
+				token = strtok(NULL, s1);
+			}
+			int length = sizeof(lines) / sizeof(lines[0]);
+			printf("%d\n", length);
+			for (int i = 0; i < length; i++) {
+				printf("%s\n", lines[i][0]);
+			}
 			//modified the function to send the buffered recieved data instead of just a string.
 			if (send(newfd, buf, sizeof buf, 0) == -1) {
 				perror("send");
