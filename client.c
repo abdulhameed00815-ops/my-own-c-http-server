@@ -31,6 +31,8 @@ int main(int argc, char *argv[])
 	int rv;
 	int len;
 	char s[INET6_ADDRSTRLEN];
+	char *multi_line = "first line\n"
+			   "second line\n";
 	
 	if (argc != 2) {
 		fprintf(stderr, "usage: client hosname\n");
@@ -73,7 +75,7 @@ int main(int argc, char *argv[])
 	printf("client: connected to %s\n", s);
 	freeaddrinfo(servinfo);
 
-	if (send(sockfd, "hello, world!", 13, 0) == -1) {
+	if (send(sockfd, multi_line, 23, 0) == -1) {
 		perror("send");
 	}
 	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
