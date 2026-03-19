@@ -47,8 +47,7 @@ int main(void)
 	int sockfd, newfd;
 	char buf[MAXDATASIZE];
 	char lines[5][1024];
-	FILE *fp;
-	char s1[1024];
+	char line[1024];
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
@@ -128,12 +127,23 @@ int main(void)
 			FILE *wf = fopen("client_msg.txt", "w");
 
 			fputs(buf, wf);
+			fclose(wf);
+
 			FILE *rf = fopen("client_msg.txt", "r");
-			while (fgets(s1, sizeof s1, rf) != NULL) {
-				printf("%s", s);
+			int i = 0;
+			while (fgets(line, sizeof line, rf) != NULL) {
+				strcpy(lines[i], line);
+				i++;
+				printf("%d\n", i);
 			}
+			fclose(rf);
+
 			int length = sizeof(lines) / sizeof(lines[0]);
 			printf("%d\n", length);
+			for (i = 0; i < 5; i++) {
+				printf("%s\n", lines[i]);
+			}
+
 			//modified the function to send the buffered recieved data instead of just a string.
 			if (send(newfd, buf, sizeof buf, 0) == -1) {
 				perror("send");
