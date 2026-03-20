@@ -43,6 +43,9 @@ int main(void)
 	struct sigaction sa;
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];
+	char *split = " ";
+	char *token;
+	char *array_of_words[10];
 	int rv, byte_count;
 	int sockfd, newfd;
 	char buf[MAXDATASIZE];
@@ -134,15 +137,31 @@ int main(void)
 			while (fgets(line, sizeof line, rf) != NULL) {
 				strcpy(lines[i], line);
 				i++;
-				printf("%d\n", i);
 			}
 			fclose(rf);
 
 			int length = sizeof(lines) / sizeof(lines[0]);
 			printf("%d\n", length);
-			for (i = 0; i < 5; i++) {
-				printf("%s\n", lines[i]);
+
+			for (int k = 0; k < 5; k++) {
+				printf("%s\n", lines[k]);
 			}
+
+			char *request_line = lines[0];
+
+			token = strtok(request_line, split);
+
+			int j = 0;
+			while (token != NULL) {
+				array_of_words[j] = token;
+				j++;
+				token = strtok(NULL, s);
+			}
+
+
+			printf("request method is: %s\n", array_of_words[0]); 
+
+
 
 			//modified the function to send the buffered recieved data instead of just a string.
 			if (send(newfd, buf, sizeof buf, 0) == -1) {
