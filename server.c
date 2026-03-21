@@ -42,15 +42,18 @@ int main(void)
 	struct addrinfo hints, *servinfo, *p;
 	struct sigaction sa;
 	int yes=1;
+	int i = 0;
 	char s[INET6_ADDRSTRLEN];
-	char *split = " ";
-	char *token;
-	char *array_of_words[10];
+	char *request_line_parts[10];
 	int rv, byte_count;
 	int sockfd, newfd;
 	char buf[MAXDATASIZE];
 	char lines[5][1024];
+	char headers[7][1024];
 	char line[1024];
+	char *request_method = "";
+	char *request_path = "";
+	char *request_protocol = "";
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
@@ -133,36 +136,49 @@ int main(void)
 			fclose(wf);
 
 			FILE *rf = fopen("client_msg.txt", "r");
-			int i = 0;
 			while (fgets(line, sizeof line, rf) != NULL) {
 				strcpy(lines[i], line);
 				i++;
 			}
 			fclose(rf);
+			i = 0;
 
 			int length = sizeof(lines) / sizeof(lines[0]);
 			printf("%d\n", length);
 
-			for (int k = 0; k < 5; k++) {
-				printf("%s\n", lines[k]);
+			for (int i = 0; i < 5; i++) {
+				printf("%s\n", lines[i]);
 			}
+			i = 0;
 
 			char *request_line = lines[0];
 
-			token = strtok(request_line, split);
+			char *myPtr = strtok(request_line, " ");
 
-			int j = 0;
-			while (token != NULL) {
-				array_of_words[j] = token;
-				j++;
-				token = strtok(NULL, s);
+			while (myPtr != NULL) {
+				request_line_parts[i] = myPtr;
+				myPtr = strtok(NULL, " ");
+				i++;
 			}
+			i = 0;
 
+			request_line = request_line_parts[0];
 
-			printf("request method is: %s\n", array_of_words[0]); 
+			request_path = request_line_parts[1];
 
+			request_protocol = request_line_parts[2];
 
+			for (i = 0; i < 6; i++) {
+				if (!(lines[i] == request_line)) {
+				       strcpy(headers[i], lines[i]);
+				       printf("header%d: %s\n", i, headers[i]);
+				}
 
+				if (strcmp(lines[i], "\n") == 0) {
+					break;
+				}
+			}
+			
 			//modified the function to send the buffered recieved data instead of just a string.
 			if (send(newfd, buf, sizeof buf, 0) == -1) {
 				perror("send");
