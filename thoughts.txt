@@ -1,1 +1,1 @@
-so, the next step is to to adapt the server to properly read http requests line by line.
+so, to parse headers we will need to split each header line to key and value, then we have to store both types in separate arrays with syncronized indexing, the big problem is, how to split the data around just the first column, its way simpler in python but here i guess i gotta figure it out.
