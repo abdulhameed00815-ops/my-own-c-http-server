@@ -54,6 +54,8 @@ int main(void)
 	char *request_method = "";
 	char *request_path = "";
 	char *request_protocol = "";
+	char header_keys[7][1024];
+	char header_values[7][1024];
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
@@ -130,12 +132,12 @@ int main(void)
 			}
 			printf("original recieved message: %s\n", buf);
 
-			FILE *wf = fopen("client_msg.txt", "w");
+			FILE *wf = fopen("http_request.txt", "w");
 
 			fputs(buf, wf);
 			fclose(wf);
 
-			FILE *rf = fopen("client_msg.txt", "r");
+			FILE *rf = fopen("http_request.txt", "r");
 			while (fgets(line, sizeof line, rf) != NULL) {
 				strcpy(lines[i], line);
 				i++;
@@ -178,6 +180,22 @@ int main(void)
 					break;
 				}
 			}
+			i = 0;
+
+			for (i = 0; i < 5; i++) {
+				while ( piece != NULL ) {
+					i = 0;
+					char *key = strtok(headers[i], ": ");
+					strcpy(header_keys[i], key);
+					printf("key: %s\n", header_keys[i]);
+					char *value = strtok(NULL, ": ");
+					strcpy(header_values[i], value);
+					printf("value: %s\n", header_values[i]);
+					i++;
+				}
+			}
+
+				
 			
 			//modified the function to send the buffered recieved data instead of just a string.
 			if (send(newfd, buf, sizeof buf, 0) == -1) {
