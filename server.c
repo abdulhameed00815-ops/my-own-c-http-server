@@ -35,6 +35,32 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+
+char *multi_tok(char *input, char *delimiter) {
+	static char *string;
+	if (input != NULL) {
+		string = input;
+	}
+
+	if (string == NULL) {
+		return string;
+	}
+
+	char *end = strstr(string, delimiter);
+	if (end == NULL) {
+		char *temp = string;
+		string = NULL;
+		return temp;
+	}
+
+	char *temp = string;
+
+	*end = '\0';
+
+	string = end + strlen(delimiter);
+	return temp;
+}
+
 int main(void)
 {
 	struct sockaddr_storage their_addr;
@@ -182,17 +208,15 @@ int main(void)
 			}
 			i = 0;
 
+
 			for (i = 0; i < 5; i++) {
-				while ( piece != NULL ) {
-					i = 0;
-					char *key = strtok(headers[i], ": ");
-					strcpy(header_keys[i], key);
-					printf("key: %s\n", header_keys[i]);
-					char *value = strtok(NULL, ": ");
-					strcpy(header_values[i], value);
-					printf("value: %s\n", header_values[i]);
-					i++;
-				}
+				char *token = multi_tok(headers[i], ": ");
+				strcpy(header_keys[i], token);
+				printf("key%d: %s\n", i, header_keys[i]); 
+				token = multi_tok(NULL, ": ");
+				strcpy(header_values[i], token);
+				printf("value%d: %s\n", i, header_values[i]); 
+
 			}
 
 				
