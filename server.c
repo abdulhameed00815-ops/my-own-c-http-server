@@ -196,7 +196,7 @@ int main(void)
 
 			request_protocol = request_line_parts[2];
 
-			for (i = 0; i < 6; i++) {
+			for (i = 0; i < 4; i++) {
 				if (!(lines[i] == request_line)) {
 				       strcpy(headers[i], lines[i]);
 				       printf("header%d: %s\n", i, headers[i]);
@@ -210,11 +210,14 @@ int main(void)
 
 
 			for (i = 0; i < 5; i++) {
-				char *token = multi_tok(headers[i], ": ");
+				char *token = strtok(headers[i], ":");
 				strcpy(header_keys[i], token);
+				printf("hey mom");
+				fflush(stdout);
 				printf("key%d: %s\n", i, header_keys[i]); 
-				token = multi_tok(NULL, ": ");
-				strcpy(header_values[i], token);
+				char *token2 = strtok(NULL, "\r\n");
+
+				strcpy(header_values[i], token2);
 				printf("value%d: %s\n", i, header_values[i]); 
 
 			}
