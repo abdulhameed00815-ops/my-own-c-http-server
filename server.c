@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -13,6 +14,15 @@
 #define MYPORT "3940"
 #define BACKLOG 10
 #define MAXDATASIZE 100
+
+
+//this function moves the pointer of the string from whitespace till it reaches a non-whitespace character (left trims it).
+char *ltrim(char *s)
+{
+    while(isspace(*s)) s++;
+    return s;
+}
+
 
 //clean dead children processes.
 void sigchld_handler(int s)
@@ -36,33 +46,10 @@ void *get_in_addr(struct sockaddr *sa)
 }
 
 
-char *multi_tok(char *input, char *delimiter) {
-	static char *string;
-	if (input != NULL) {
-		string = input;
-	}
-
-	if (string == NULL) {
-		return string;
-	}
-
-	char *end = strstr(string, delimiter);
-	if (end == NULL) {
-		char *temp = string;
-		string = NULL;
-		return temp;
-	}
-
-	char *temp = string;
-
-	*end = '\0';
-
-	string = end + strlen(delimiter);
-	return temp;
-}
-
 int main(void)
 {
+	char *header_key = "";
+	char *header_value = "";
 	struct sockaddr_storage their_addr;
 	socklen_t sin_size;
 	struct addrinfo hints, *servinfo, *p;
@@ -190,12 +177,13 @@ int main(void)
 			}
 			i = 0;
 
-			request_line = request_line_parts[0];
+			request_method = request_line_parts[0];
 
 			request_path = request_line_parts[1];
 
 			request_protocol = request_line_parts[2];
 
+			//parses header lines.
 			for (i = 0; i < 4; i++) {
 				if (!(lines[i] == request_line)) {
 				       strcpy(headers[i], lines[i]);
@@ -209,21 +197,19 @@ int main(void)
 			i = 0;
 
 
-			for (i = 0; i < 5; i++) {
-				char *token = strtok(headers[i], ":");
-				strcpy(header_keys[i], token);
-				printf("hey mom");
-				fflush(stdout);
-				printf("key%d: %s\n", i, header_keys[i]); 
-				char *token2 = strtok(NULL, "\r\n");
-
-				strcpy(header_values[i], token2);
-				printf("value%d: %s\n", i, header_values[i]); 
-
+			//actually parses headers.
+			for (i = 1; i < 4; i++) {
+				char *token = "";
+				token = strtok(headers[i], ":");
+				strcpy(header_keys[i-1], token);
+				//this second token is the header value.
+				token = strtok(NULL, "\0");
+				token = ltrim(token);
+				strcpy(header_values[i-1], token);
 			}
+			i = 0;
 
 				
-			
 			//modified the function to send the buffered recieved data instead of just a string.
 			if (send(newfd, buf, sizeof buf, 0) == -1) {
 				perror("send");
