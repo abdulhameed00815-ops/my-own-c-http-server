@@ -1,1 +1,1 @@
-so, to parse headers we will need to split each header line to key and value, then we have to store both types in separate arrays with syncronized indexing, the big problem is, how to split the data around just the first column, its way simpler in python but here i guess i gotta figure it out.
+today was good cause i managed to parse headers successfuly, maybe tomorrow i should parse the request body or create handling functions that handle each method separately:)
