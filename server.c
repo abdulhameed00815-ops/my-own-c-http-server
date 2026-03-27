@@ -69,6 +69,7 @@ int main(void)
 	char *request_protocol = "";
 	char header_keys[7][1024];
 	char header_values[7][1024];
+	char body_lines[7][1024];
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
@@ -184,7 +185,7 @@ int main(void)
 			request_protocol = request_line_parts[2];
 
 			//parses header lines.
-			for (i = 0; i < 4; i++) {
+			for (i = 0; i < 6; i++) {
 				if (!(lines[i] == request_line)) {
 				       strcpy(headers[i], lines[i]);
 				       printf("header%d: %s\n", i, headers[i]);
@@ -194,11 +195,10 @@ int main(void)
 					break;
 				}
 			}
-			i = 0;
 
 
 			//actually parses headers.
-			for (i = 1; i < 4; i++) {
+			for (i = 1; i < 5; i++) {
 				char *token = "";
 				token = strtok(headers[i], ":");
 				strcpy(header_keys[i-1], token);
@@ -207,7 +207,28 @@ int main(void)
 				token = ltrim(token);
 				strcpy(header_values[i-1], token);
 			}
-			i = 0;
+
+			int j = 0;
+			int body_line_count = 0;
+			int line_is_header;
+			for (i = 0; i < 8; i++) {
+				if (i != 0) {
+					printf("line%d: %s", i, lines[i]);
+					for (j = 0; j < 5; j++) {
+ 						line_is_header = strcmp(lines[i], headers[j]);
+						printf("%d", line_is_header);
+						if (line_is_header != 0) {
+							printf("body_line%d: %s", i, lines[i]);
+							strcpy(body_lines[body_line_count], lines[i]);
+							body_line_count++;
+						}
+					}
+				}
+			}
+
+			for (i = 0; i < 5; i++) {
+				printf("body line%d: %s", i, body_lines[i]);
+			} 
 
 				
 			//modified the function to send the buffered recieved data instead of just a string.
