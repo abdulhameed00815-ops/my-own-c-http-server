@@ -141,10 +141,23 @@ int main(void)
 
 		if (!fork()) {
 			close(sockfd);
-			if ((byte_count = recv(newfd, buf, MAXDATASIZE-1, 0)) == -1) {
-				perror("recv");
+                        char *headers_end = strstr(buf, "\r\n\r\n");
+
+                        if (headers_end) {
+				int header_len = headers_end - buf + 4;
+
+                        char *cl = strstr(buf, "Content-Length:");
+			if (cl) {
+				int content_length;
+				sscanf(cl, "Content-Length: %d", &content_length);
+
+				while (total < header_len + content_length) {
+				n = recv(newfd, buf + total, MAXDATASIZE - total - 1, 0);
+				if (n <= 0) break;
+				total += n;
+				}
 			}
-			printf("original recieved message: %s\n", buf);
+		}
 
 			FILE *wf = fopen("http_request.txt", "w");
 
@@ -232,7 +245,7 @@ int main(void)
 
 				
 			//modified the function to send the buffered recieved data instead of just a string.
-			if (send(newfd, buf, sizeof buf, 0) == -1) {
+			if (send(newfd, "hello, bird", 11, 0) == -1) {
 				perror("send");
 			}
 			close(newfd);
