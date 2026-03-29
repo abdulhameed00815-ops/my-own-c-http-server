@@ -141,23 +141,35 @@ int main(void)
 
 		if (!fork()) {
 			close(sockfd);
+			int n;
+			int total = 0;
+			//so the buf + total part tells the function where to start writing the recieved data in memory.
+			n = recv(newfd, buf + total, MAXDATASIZE-1, 0);
+			total += *buf;
+
                         char *headers_end = strstr(buf, "\r\n\r\n");
+
+			while (headers_end == NULL) {
+
+				n = recv(newfd, buf + total, MAXDATASIZE-1, 0);
+				headers_end = strstr(buf, "\r\n\r\n");
+			}
 
                         if (headers_end) {
 				int header_len = headers_end - buf + 4;
 
-                        char *cl = strstr(buf, "Content-Length:");
-			if (cl) {
-				int content_length;
-				sscanf(cl, "Content-Length: %d", &content_length);
+				char *cl = strstr(buf, "Content-Length:");
+				if (cl) {
+					int content_length;
+					sscanf(cl, "Content-Length: %d", &content_length);
 
-				while (total < header_len + content_length) {
-				n = recv(newfd, buf + total, MAXDATASIZE - total - 1, 0);
-				if (n <= 0) break;
-				total += n;
+					while (total < header_len + content_length) {
+						n = recv(newfd, buf + total, MAXDATASIZE - total - 1, 0);
+						if (n <= 0) break;
+						total += n;
+					}
 				}
 			}
-		}
 
 			FILE *wf = fopen("http_request.txt", "w");
 
