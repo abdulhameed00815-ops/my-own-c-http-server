@@ -143,7 +143,7 @@ int main(void)
 			close(sockfd);
 			int n;
 			int total = 0;
-			//so the buf + total part tells the function where to start writing the recieved data in memory.
+			//so the buf + total part tells the function from where to start writing the recieved data in memory.
 			n = recv(newfd, buf + total, MAXDATASIZE-1, 0);
 			total += *buf;
 
@@ -256,7 +256,6 @@ int main(void)
 			} 
 
 				
-			//modified the function to send the buffered recieved data instead of just a string.
 			if (send(newfd, "hello, bird", 11, 0) == -1) {
 				perror("send");
 			}
