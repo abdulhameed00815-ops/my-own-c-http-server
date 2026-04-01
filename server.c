@@ -145,7 +145,7 @@ int main(void)
 			int total = 0;
 			//so the buf + total part tells the function from where to start writing the recieved data in memory.
 			n = recv(newfd, buf + total, MAXDATASIZE-1, 0);
-			total += *buf;
+			total += n;
 
                         char *headers_end = strstr(buf, "\r\n\r\n");
 
@@ -153,7 +153,10 @@ int main(void)
 
 				n = recv(newfd, buf + total, MAXDATASIZE-1, 0);
 				headers_end = strstr(buf, "\r\n\r\n");
+				total += n;
 			}
+			printf("headers recieved successfuly\n");
+			printf("%s\n", buf);
 
                         if (headers_end) {
 				int header_len = headers_end - buf + 4;
