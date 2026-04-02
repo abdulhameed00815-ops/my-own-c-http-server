@@ -156,7 +156,7 @@ int main(void)
 				total += n;
 			}
 			printf("headers recieved successfuly\n");
-			printf("%s\n", buf);
+			printf("%s\n\n", buf);
 
                         if (headers_end) {
 				int header_len = headers_end - buf + 4;
@@ -174,18 +174,13 @@ int main(void)
 				}
 			}
 
-			FILE *wf = fopen("http_request.txt", "w");
+		        int *end_of_line = strchr(buf, "\n");	
 
-			fputs(buf, wf);
-			fclose(wf);
+			int *start_of_line = *buf;
 
-			FILE *rf = fopen("http_request.txt", "r");
-			while (fgets(line, sizeof line, rf) != NULL) {
-				strcpy(lines[i], line);
-				i++;
-			}
-			fclose(rf);
-			i = 0;
+			int single_line = end_of_line - start_of_line;
+
+			printf("%s\n", single_line);
 
 			int length = sizeof(lines) / sizeof(lines[0]);
 			printf("%d\n", length);
