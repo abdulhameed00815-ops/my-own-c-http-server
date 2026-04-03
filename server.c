@@ -174,13 +174,11 @@ int main(void)
 				}
 			}
 
-		        int *end_of_line = strchr(buf, "\n");	
+			char new_buf[] = {0};
 
-			int *start_of_line = *buf;
+			sscanf(buf, "%[^\n]", new_buf);	
 
-			int single_line = end_of_line - start_of_line;
-
-			printf("%s\n", single_line);
+			printf("new_buf: %s", new_buf);
 
 			int length = sizeof(lines) / sizeof(lines[0]);
 			printf("%d\n", length);
