@@ -98,7 +98,10 @@ int get_listener_socket(void) {
 	return listener;
 }
 
-void handle_new_connnections(int listener, fd_set *master, int *fdmax) {
+printf("waiting for incoming connections...");
+
+
+void handle_new_connnection(int listener, fd_set *master, int *fdmax) {
 	socklen_t addrlen;
 	int newfd;
 	struct sockaddr_storage remoteaddr;	
@@ -117,6 +120,25 @@ void handle_new_connnections(int listener, fd_set *master, int *fdmax) {
 		printf("selectserver: new connection from %s on socket %d\n", inet_ntop2(&remoteaddr, remoteIP, sizeof remoteIP), newfd);
 	}
 }
+
+
+void handle_client_data(int s, int listener, fd_set *master, int fdmax) {
+	char buf[256];
+	int nbytes;
+
+	if ((nbytes = recv(s, buf, sizeof buf, 0)) <= 0) {
+		if (nbytes == 0) {
+			printf("selectserver: socket %d hung up");
+		} else {
+			perror("recv");
+		}		
+		close(s);
+		FD_CLR(s, master);
+	} else {
+		int *client_data = nbytes;
+	}
+}
+
 
 int main(void)
 {
@@ -160,9 +182,9 @@ int main(void)
 		for(int i = 0; i <= fdmax; i++) {
 			if (FD_ISSET(i, &read_fds)) {
 				if (i == listener) {
-					handle_new_connection();
+					handle_new_connection(i, &master, &fdmax);
 				} else {
-					handle_client_data();
+					handle_client_data(i, listener, &master, fdmax);
 				}
 			}
 		}
