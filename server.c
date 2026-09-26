@@ -11,7 +11,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#define MYPORT "3940"
+#define PORT "3940"
 #define BACKLOG 10
 #define MAXDATASIZE 100
 
@@ -24,42 +24,116 @@ char *ltrim(char *s)
 }
 
 
-//clean dead children processes.
-void sigchld_handler(int s)
-{
-	(void)s;
-
-	int saved_errno = errno;
-
-	while(waitpid(-1, NULL, WNOHANG) > 0);
-
-	errno = saved_errno;
+const char *inet_ntop2(void *addr, char *buf, size_t size) {
+	struct sockaddr_storage *sas = addr;
+	struct sockaddr_in *sa4;
+	struct sockaddr_in6 *sa6;
+	void *src;
+	
+	switch (sas->ss_family) {
+		case AF_INET:
+			sa4 = addr;
+			src = &(sa4->sin_addr);
+			break;
+		case AF_INET6:
+			sa6 = addr;
+			src = &(sa6->sin_addr);
+			break;
+		default:
+			return NULL;
+	}
+	
+	return inet_ntop(sas->ss_family, src, buf, size);
 }
 
-void *get_in_addr(struct sockaddr *sa)
-{
-	if (sa->sa_family == AF_INET) {
-		return &(((struct sockaddr_in*)sa)->sin_addr);
+
+int get_listener_socket(void) {
+	struct addrinfo hints, *ai, *p;
+	int yes=1;
+	int rv;
+	int listener;
+
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+
+	if ((rv = getaddrinfo(NULL, PORT, &hints, &ai))) {
+		fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
+		exit(1);
 	}
 
-	return &(((struct sockaddr_in6*)sa)->sin6_addr);
+	for(p = ai; p != NULL; p = p->ai_next) {
+		listener = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+		if (listener < 0) {
+			continue;
+		}
+
+		//this allows us to bind to the same port after closing the server without issues.
+		if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+			perror("setsockopt");
+			exit(1);
+		}
+
+		if (bind(listener, p->ai_addr, p->ai_addrlen) < 0) {
+			close(listener);
+			continue;
+		}
+
+		break;
+	}
+
+	if (p == NULL) {
+		fprintf(stderr, "server: failed to bind\n");
+		exit(2);
+	}
+	
+	freeaddrinfo(ai);
+
+	if (listen(listener, 10) == -1) {
+		perror("listen");
+		exit(3);
+	}
+
+	return listener;
 }
 
+void handle_new_connnections(int listener, fd_set *master, int *fdmax) {
+	socklen_t addrlen;
+	int newfd;
+	struct sockaddr_storage remoteaddr;	
+	char remoteIP[INET6_ADDRSTRLEN];
+
+	addrlen = sizeof remoteaddr;
+	newfd = accept(listener, (struct sockaddr *)&remoteaddr, &addrlen);
+	
+	if (newfd == -1) {
+		perror("accept");
+	} else {
+		FD_SET(newfd, master);
+		if (newfd > *fdmax) {
+			*fdmax = newfd;
+		}
+		printf("selectserver: new connection from %s on socket %d\n", inet_ntop2(&remoteaddr, remoteIP, sizeof remoteIP), newfd);
+	}
+}
 
 int main(void)
 {
+	fd_set master;
+	fd_set read_fds;
+	int fdmax;
+
+	int listener;
+
+	FD_SET(listener, &master);
+
+	fdmax = listener;
+
+	//unfinished server code
 	char *header_key = "";
 	char *header_value = "";
-	struct sockaddr_storage their_addr;
-	socklen_t sin_size;
-	struct addrinfo hints, *servinfo, *p;
-	struct sigaction sa;
-	int yes=1;
-	int i = 0;
-	char s[INET6_ADDRSTRLEN];
-	char *request_line_parts[10];
-	int rv, byte_count;
-	int sockfd, newfd;
+	int byte_count;
 	char buf[MAXDATASIZE];
 	char lines[5][1024];
 	char headers[7][1024];
@@ -71,63 +145,29 @@ int main(void)
 	char header_values[7][1024];
 	char body_lines[7][1024];
 
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
-
-	//the getaddrinfo function makes the os give us some ready to use socket address configurations for our server based on our hints.
-	if ((rv = getaddrinfo(NULL, MYPORT, &hints, &servinfo))) {
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-		return 1;
-	}
 
 	//here we loop thro the results of getaddrinfo, pick a working address, and create a socket using it.
-	for(p = servinfo; p != NULL; p = p->ai_next) {
-		if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-			perror("server: socket");
-			continue;
-		}
-
-		//this allows us to bind to the same port after closing the server without issues.
-		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-			perror("setsockopt");
-			exit(1);
-		}
-
-		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-			close(sockfd);
-			perror("server: bind");
-			continue;
-		}
-
-		break;
-	}
-	
-	freeaddrinfo(servinfo);
-
-	if (p == NULL) {
-		fprintf(stderr, "server: failed to bind\n");
-		exit(1);
-	}
-
-	if (listen(sockfd, BACKLOG) == -1) {
-		perror("listen");
-		exit(1);
-	}
-
-	sa.sa_handler = sigchld_handler;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-
-	if (sigaction(SIGCHLD, &sa, NULL) == -1){
-		perror("sigaction");
-		exit(1);
-	}
 
 	printf("server: waiting for connections...\n");
 
-	while(1) {
+	for (;;) {
+		read_fds = master;
+		if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
+			perror("select");
+			exit(4);
+		}
+
+		for(int i = 0; i <= fdmax; i++) {
+			if (FD_ISSET(i, &read_fds)) {
+				if (i == listener) {
+					handle_new_connection();
+				} else {
+					handle_client_data();
+				}
+			}
+		}
+		
+		//unfinished server code
 		sin_size = sizeof their_addr;
 		newfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
 
