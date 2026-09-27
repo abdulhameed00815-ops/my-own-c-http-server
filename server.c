@@ -57,7 +57,7 @@ int get_listener_socket(void) {
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	if ((rv = getaddrinfo(NULL, PORT, &hints, &ai))) {
+	if ((rv = getaddrinfo(NULL, PORT, &hints, &ai)) != 0) {
 		fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
 		exit(1);
 	}
@@ -144,6 +144,7 @@ int main(void)
 	int fdmax;
 
 	int listener;
+	listener = get_listener_socket();
 
 	FD_SET(listener, &master);
 
