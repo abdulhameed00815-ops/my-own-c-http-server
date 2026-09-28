@@ -119,6 +119,16 @@ void handle_new_connection(int listener, fd_set *master, int *fdmax) {
 }
 
 
+void parse_client_data(char buf[]) {
+	char first_line[256];
+	for(int i = 0; buf[i] != '\n'; i++) {
+		first_line[i] = buf[i];
+	} 
+
+	printf("first line: %s\n", first_line);	
+}
+
+
 void handle_client_data(int s, int listener, fd_set *master, int fdmax) {
 	char buf[256];
 	int nbytes;
@@ -132,7 +142,8 @@ void handle_client_data(int s, int listener, fd_set *master, int fdmax) {
 		close(s);
 		FD_CLR(s, master);
 	} else {
-		printf("%s\n", buf);
+		parse_client_data(buf);
+		return;
 	}
 }
 
