@@ -159,18 +159,22 @@ char** str_split(char* a_str, const char a_delim) {
 }
 
 
-void parse_client_data(char buf[]) {
-	char first_line[256];
-	int i;
-	for(i = 0; buf[i] != '\n'; i++) {
-		first_line[i] = buf[i];
-	} 
-	first_line[i] = '\0';
+char *parse_message_lines(char buf[]) {
+	static char *message_lines = str_split(buf, '\n');
+	return message_lines;
+}
 
-	printf("first line: %s\n", first_line);	
+
+void parse_request_line(char *message_lines[]) {
+	char request_line[256];
+	char message_lines[256];	
+	request_line = *message_lines[0];
+	request_line[i] = '\0';
+
+	printf("request_line: %s\n", request_line);	
 	char** tokens;
 	
-	tokens = str_split(first_line, '/');
+	tokens = str_split(request_line, ' ');
 
 	if (tokens) {
 		for(int i = 0; *(tokens + i); i++) {
@@ -180,6 +184,20 @@ void parse_client_data(char buf[]) {
 		printf("\n");
 		free(tokens);
 	}
+}
+
+
+void parse_headers(char *message_lines[]) {
+	for (int i = 1, i < 5, i++) {
+		printf("header[%d]: %s", i, *message_lines[i]);
+	}
+}
+
+
+void parser(char buf[]) {
+	char message_lines = parse_message_lines(buf)
+	parse_request_line(message_lines);
+	parse_headers(message_lines);
 }
 
 
@@ -196,7 +214,7 @@ void handle_client_data(int s, int listener, fd_set *master, int fdmax) {
 		close(s);
 		FD_CLR(s, master);
 	} else {
-		parse_client_data(buf);
+		parser(buf);
 		return;
 	}
 }
