@@ -173,10 +173,12 @@ void parse_client_data(char buf[]) {
 	tokens = str_split(first_line, '/');
 
 	if (tokens) {
-		for(int i = 0; i <= sizeof(tokens); i++) {
-			printf("token number(%d): %s", i, tokens[i]);
+		for(int i = 0; *(tokens + i); i++) {
+			printf("token number(%d): %s\n", i, tokens[i]);
 			free(*(tokens + i));
 		}
+		printf("\n");
+		free(tokens);
 	}
 }
 
