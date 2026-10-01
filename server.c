@@ -158,18 +158,17 @@ char** str_split(char* a_str, const char a_delim) {
 
 }
 
-
-char *parse_message_lines(char buf[]) {
-	static char *message_lines = str_split(buf, '\n');
-	return message_lines;
+// declaring message_lines a global variable.
+char** message_lines; 
+void parse_message_lines(char buf[]) {
+	message_lines = str_split(buf, '\n');
+	return;
 }
 
 
-void parse_request_line(char *message_lines[]) {
-	char request_line[256];
-	char message_lines[256];	
-	request_line = *message_lines[0];
-	request_line[i] = '\0';
+void parse_request_line() {
+	char *request_line;
+	request_line = message_lines[0];
 
 	printf("request_line: %s\n", request_line);	
 	char** tokens;
@@ -187,17 +186,17 @@ void parse_request_line(char *message_lines[]) {
 }
 
 
-void parse_headers(char *message_lines[]) {
-	for (int i = 1, i < 5, i++) {
-		printf("header[%d]: %s", i, *message_lines[i]);
+void parse_headers() {
+	for (int i = 1; i < 5; i++) {
+		printf("header[%d]: %s\n", i, message_lines[i]);
 	}
 }
 
 
 void parser(char buf[]) {
-	char message_lines = parse_message_lines(buf)
-	parse_request_line(message_lines);
-	parse_headers(message_lines);
+	parse_message_lines(buf);
+	parse_request_line();
+	parse_headers();
 }
 
 
